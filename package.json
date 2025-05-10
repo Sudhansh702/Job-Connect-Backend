@@ -1,0 +1,32 @@
+{
+  "name": "job_connect",
+  "version": "1.0.0",
+  "description": "A backend for the Job Connect application.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "job",
+    "connect",
+    "backend",
+    "api"
+  ],
+  "author": "Sudhansh Kumar",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.14.1",
+    "multer": "^1.4.5-lts.2",
+    "validator": "^13.15.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}
