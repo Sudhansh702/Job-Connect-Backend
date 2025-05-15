@@ -29,7 +29,13 @@ const userSchema = new mongoose.Schema({
     type: [mongoose.Schema.Types.ObjectId],
     ref: "Jobs",
   }],
-  professionalTitle: { 
+  type : {
+    type: String,
+    enum: ["Recruiter", "Job Seeker"],
+    default: "Job Seeker",
+    required: true,
+  },
+  location: { 
     type: String, required: true 
   },
 }, { timestamps: true });
