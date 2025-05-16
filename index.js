@@ -13,9 +13,9 @@ const PORT = 5000;
 
 app.use(cors({
   origin: 'https://job-connect-frontend-eight.vercel.app',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
+app.options('*', cors());
 
 app.use(bodyParser.json());
 
