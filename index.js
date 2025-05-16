@@ -8,17 +8,13 @@ connectDB()
 
 const app = express();
 const PORT = 5000;
-
-// ✅ Correct CORS setup
 app.use(cors({
-  origin: ['https://job-connect-frontend-eight.vercel.app', 'http://localhost:5173'],
-  credentials: true,
+  origin: ['https://job-connect-frontend-eight.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// ✅ Preflight support
-app.options('*', cors());
+// app.options('*', cors());
 
 app.use(bodyParser.json());
 
