@@ -119,16 +119,21 @@ router.post('/applyjob', authMiddleware, upload.single("resume"), async (req, re
     if (alreadyApplied) {
       return res.status(400).json({ message: 'You have already applied for this job.' });
     }
-    // console.log("Incoming data:", { name, email, cover, jobId, employerID, resumeFile, applicantID });
 
     if (!jobId || !name || !email || !cover || !resumeFile) {
       return res.status(400).json({ message: 'All fields are required, including a resume.' });
     }
 
-    if (!['image/png'].includes(resumeFile.mimetype)) {
-      return res.status(400).json({ message: 'Invalid resume format. Only PNG images are allowed.' });
+    // Allow only PDF, DOC, DOCX
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    if (!allowedMimeTypes.includes(resumeFile.mimetype)) {
+      return res.status(400).json({ message: 'Invalid resume format. Only PDF, DOC, and DOCX files are allowed.' });
     }
-    // console.log('creating new')
+
     const newApplication = new Applications({
       name,
       email,
@@ -143,8 +148,6 @@ router.post('/applyjob', authMiddleware, upload.single("resume"), async (req, re
     });
 
     await newApplication.save();
-
-    // console.log('Application saved:', newApplication);
 
     res.status(201).json({ message: 'Application submitted successfully', newApplication });
   } catch (error) {
