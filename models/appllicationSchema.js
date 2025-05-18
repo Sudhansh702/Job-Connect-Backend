@@ -15,8 +15,8 @@ const applicationSchema = new mongoose.Schema({
     required: [true, "Please provide a cover letter!"],
   },
   resume: {
-    data: Buffer,
-    contentType: String,
+    type :String,
+    required : true,
   },
   jobId: {
       type: mongoose.Schema.Types.ObjectId,

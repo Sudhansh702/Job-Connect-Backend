@@ -1,12 +1,24 @@
 const express = require('express')
 const jwt = require('jsonwebtoken');
+const path = require('path');
+const fs = require('fs');
 const router = express.Router();
+
 const Applications = require('../models/appllicationSchema')
 const Jobs = require('../models/jobsSchema')
 
 const multer = require("multer");
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../uploads'))
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    cb(null, file.fieldname + '-' + uniqueSuffix + '.pdf')
+  }
+})
+
+const upload = multer({ storage: storage })
 
 const authMiddleware = (req, res, next) => {
   try {
@@ -28,13 +40,23 @@ router.delete('/deleteapplication/:jobId', authMiddleware, async (req, res) => {
     if (!application) {
       return res.status(404).json({ message: 'Application not found' });
     }
-    res.status(200).json({ message: 'Application deleted successfully' });
+
+    // Delete the resume file if it exists
+    if (application.resume) {
+      const resumePath = path.join(__dirname, '../uploads', application.resume);
+      fs.unlink(resumePath, (err) => {
+        if (err && err.code !== 'ENOENT') {
+          console.error('Error deleting resume file:', err);
+        }
+      });
+    }
+
+    res.status(200).json({ message: 'Application and resume deleted successfully' });
   } catch (error) {
     console.error('Error deleting application:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
-}
-);
+});
 
 // approve application
 router.post('/applicants/:applicationId/approve', authMiddleware, async (req, res) => {
@@ -65,19 +87,8 @@ router.get('/applicants', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Job not found' });
     }
     const applications = await Applications.find({ jobId }).populate('applicantID', 'name');
-    const applicationsWithResume = applications.map(application => {
-      if (application.resume && application.resume.data) {
-        const base64Resume = application.resume.data.toString('base64');
-        return {
-          ...application.toObject(),
-          resume: `data:${application.resume.contentType};base64,${base64Resume}`
-        };
-      }
-      return application;
-    });
-    console.log('Applications:', applicationsWithResume);
-    res.json(applicationsWithResume);
 
+    // Simply send the applications with the resume path
     res.json(applications);
   } catch (error) {
     console.error('Error fetching applicants:', error);
@@ -126,9 +137,7 @@ router.post('/applyjob', authMiddleware, upload.single("resume"), async (req, re
 
     // Allow only PDF, DOC, DOCX
     const allowedMimeTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      'application/pdf'
     ];
     if (!allowedMimeTypes.includes(resumeFile.mimetype)) {
       return res.status(400).json({ message: 'Invalid resume format. Only PDF, DOC, and DOCX files are allowed.' });
@@ -141,10 +150,7 @@ router.post('/applyjob', authMiddleware, upload.single("resume"), async (req, re
       jobId,
       applicantID,
       employerID,
-      resume: {
-        data: resumeFile.buffer,
-        contentType: resumeFile.mimetype,
-      },
+      resume: path.basename(resumeFile.path), // Store only filename instead of full path
     });
 
     await newApplication.save();
@@ -154,6 +160,20 @@ router.post('/applyjob', authMiddleware, upload.single("resume"), async (req, re
     console.error('Error applying for job:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
+});
+
+// Add new route to serve PDF files
+router.get('/view-resume/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, '../uploads', filename);
+  
+  // Set content type to PDF
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'inline');
+  
+  // Stream the file
+  const stream = fs.createReadStream(filePath);
+  stream.pipe(res);
 });
 
 module.exports = router;
